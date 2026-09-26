@@ -14,3 +14,10 @@ HONEYPOT_WARNING_EMBED = discord.Embed(
     color=discord.Color.red()
 )
 HONEYPOT_WARNING_EMBED.set_footer(text=HONEYPOT_WARNING_MARKER)
+
+
+SUPREME_LEADER_INCIDENT_EMBED = discord.Embed(
+    title="Supreme Leader Incident",
+    description="User attempted to bully the Supreme Leader.",
+    color=discord.Color.red()
+)
