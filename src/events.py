@@ -67,7 +67,7 @@ def register_events(bot):
             if mod_channel and deleted > 0:
                 await mod_channel.send(
                     f"Deleted `{deleted}` recent messages from {message.author.mention} "
-                    f"(last {PURGE_TIMEFRAME} seconds)."
+                    f"(last `{PURGE_TIMEFRAME}` seconds)."
                 )
         except Exception as e:
             log.error(f"Failed to purge messages: {e}")
