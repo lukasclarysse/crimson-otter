@@ -38,8 +38,8 @@ Make sure you enable the privileged intents in the Discord Developer Portal.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/lukasclarysse/honeypot.git
-cd honeypot
+git clone https://github.com/lukasclarysse/crimson-otter.git
+cd crimson-otter
 ```
 
 ### 2. Create a virtual environment
