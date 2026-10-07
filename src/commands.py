@@ -7,10 +7,6 @@ from logging_setup import log
 
 
 def register_commands(bot):
-    @bot.command()
-    async def ping(ctx):
-        latency = round(bot.latency * 1000)
-        await ctx.send(f"pong `{latency}ms`")
 
     @bot.command()
     async def bully(ctx, member: discord.Member = None):
