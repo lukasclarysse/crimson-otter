@@ -1,6 +1,6 @@
 services:
   bot:
-    build: .
+    image: lukasclarysse/crimson-otter:latest
     env_file:
       - .env
     restart: unless-stopped
