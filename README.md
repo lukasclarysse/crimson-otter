@@ -1,77 +1,111 @@
 # Crimson Otter
 
-A small Discord honeypot bot.
+A lightweight, modular Discord honeypot bot.
 
-Crimson Otter watches a designated channel and treats anyone who posts there as having triggered the honeypot. Their message is deleted, recent messages can be purged, and they can be kicked or banned depending on the configuration.
+Crimson Otter monitors a designated channel and automatically moderates anyone who posts there. When triggered, it deletes the message, optionally purges recent user activity, and executes a configured moderation action (kick or ban).
 
-It started as a simple moderation bot and is intentionally kept fairly small. The bot is modular, so new features can be added as their own modules without having to pile everything into one giant file.
+---
 
 ## Features
 
-- Honeypot channel with automatic moderation
-- Configurable kick or ban action
-- Recent message purging
-- Moderation logs
-- Modular feature system
+- **Honeypot Channel:** Automatic detection and moderation for restricted channels.
+- **Configurable Actions:** Action member removal via `kick` or `ban`.
+- **Message Purging:** Automatically cleans up recent messages upon trigger.
+- **Audit Logging:** Sends event notifications to a designated log channel.
+- **Modular Architecture:** Features are implemented as independent modules.
+- **Container Ready:** Full Docker and Docker Compose support.
 
-## Setup
+---
+
+## Prerequisites
 
 ### Requirements
+- **Privileged Intents:** Message Content Intent, Server Members Intent
+- **Bot Permissions:** Send Messages, Embed Links, Read Message History, Manage Messages, Kick Members, Ban Members
 
-- Python 3.10+
-- A Discord bot application
-- A bot token
+### Environment Support
+- **Docker Deployment:** Docker & Docker Compose
+- **Local Deployment:** Python 3.13+
 
-The bot needs the **Message Content** and **Members** privileged intents enabled in the Discord Developer Portal.
+---
 
-It also needs permission to:
-
-- Send messages
-- Embed links
-- Read message history
-- Manage messages
-- Kick or ban members
-
-### Install
-
-Clone the repository and install the dependencies:
-```bash
-git clone https://github.com/lukasclarysse/crimson-otter.git
-cd crimson-otter
-python -m venv .venv
-```
-Activate the virtual environment.
-```
-.venv\Scripts\activate      # windows
-source .venv/bin/activate   # unix
-```
-
-Then install the dependencies:
-```python
-pip install -r requirements.txt
-```
-
-### Configure
+## Configuration
 
 Create a `.env` file in the project root:
-```plaintext
+
+```env
 TOKEN=yourbottoken
-GUILDID=yourserverid
-HONEYPOTCHANNEL=yourhoneypotchannelid
-LOGCHANNEL=yourlogchannel_id
-BOTACTION=kick
-PURGETIMEFRAME=300
+GUILD_ID=yourserverid
+HONEYPOT_CHANNEL=yourhoneypotchannelid
+LOG_CHANNEL=yourlogchannelid
+BOT_ACTION=kick
+PURGE_TIMEFRAME=300
 ```
 
-`BOT_ACTION` can be either `kick` or `ban`.
+### Environment Variables
 
-`PURGE_TIMEFRAME` is the number of seconds of recent messages to remove when the honeypot is triggered.
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `TOKEN` | Discord bot token | — |
+| `GUILD_ID` | Target Discord server ID | — |
+| `HONEYPOT_CHANNEL` | Channel ID monitored as honeypot | — |
+| `LOG_CHANNEL` | Channel ID for moderation logs | — |
+| `BOT_ACTION` | Action to perform (`kick` or `ban`) | — |
+| `PURGE_TIMEFRAME` | Timeframe in seconds to purge recent messages | `300` |
 
-### Run
+> **Security Note:** Keep `.env` secure and uncommitted. It is excluded via `.gitignore` and `.dockerignore`.
 
-Start the bot with:
+---
 
-python src/bot.py
+## Deployment
 
-If everything is working, the bot will come online and `$ping` should return its current latency.
+### Docker (Recommended)
 
+Published Image: `lukasclarysse/crimson-otter:latest`
+
+#### Docker Compose
+```bash
+docker compose up -d      # Start containers
+docker compose logs -f    # View logs
+docker compose restart    # Restart bot
+docker compose down       # Stop containers
+```
+
+#### Build & Run Manually
+```bash
+# Build image
+docker build -t crimson-otter .
+
+# Run container (Linux / macOS / Windows)
+docker run -d --name crimson-otter --env-file .env --restart unless-stopped crimson-otter
+```
+
+---
+
+### Local Development
+
+1. **Set up virtual environment:**
+   ```bash
+   python -m venv .venv
+   ```
+   * *Windows:* `.venv\Scripts\activate`
+   * *Linux / macOS:* `source .venv/bin/activate`
+
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Launch application:**
+   ```bash
+   python src/bot.py
+   ```
+   > Verify status by sending `$ping` in a server channel.
+
+---
+
+## Developer Guide
+
+- **Architecture:** Modules reside in `src/modules/` and are automatically loaded at runtime.
+- **Base Image:** Built on `python:3.13-slim`, copying `src/` and dependencies from `requirements.txt`.
+- **Ignore Rules:** `.dockerignore` excludes local secrets, virtual environments, Git metadata, and Python cache.
