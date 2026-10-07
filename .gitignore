@@ -1,4 +1,9 @@
+#generic
 __pycache__/
 *.pyc
 .venv/
 .env
+
+#local stuff
+crimson otter.lnk
+start_bot.vbs
