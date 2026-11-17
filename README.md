@@ -13,19 +13,7 @@ Crimson Otter monitors a designated channel and automatically moderates anyone w
 - **Message Purging:** Automatically cleans up recent messages upon trigger.
 - **Audit Logging:** Sends event notifications to a designated log channel.
 - **Modular Architecture:** Features are implemented as independent modules.
-- **Container Ready:** Full Docker and Docker Compose support.
-
----
-
-## Prerequisites
-
-### Requirements
-- **Privileged Intents:** Message Content Intent, Server Members Intent
-- **Bot Permissions:** Send Messages, Embed Links, Read Message History, Manage Messages, Kick Members, Ban Members
-
-### Environment Support
-- **Docker Deployment:** Docker & Docker Compose
-- **Local Deployment:** Python 3.13+
+- **Container Ready:** Docker and Docker Compose support.
 
 ---
 
@@ -52,8 +40,6 @@ PURGE_TIMEFRAME=300
 | `LOG_CHANNEL` | Channel ID for moderation logs | — |
 | `BOT_ACTION` | Action to perform (`kick` or `ban`) | — |
 | `PURGE_TIMEFRAME` | Timeframe in seconds to purge recent messages | `300` |
-
-> **Security Note:** Keep `.env` secure and uncommitted. It is excluded via `.gitignore` and `.dockerignore`.
 
 ---
 

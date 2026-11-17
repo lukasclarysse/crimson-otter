@@ -1,3 +1,4 @@
+
 import discord
 from discord.ext import commands
 
@@ -14,6 +15,7 @@ from .embeds import (
     HONEYPOT_WARNING_MARKER,
 )
 from .moderation import delete_recent_user_messages
+from .kick_counter import get_kick_count, increment_kick_count
 
 
 async def ensure_honeypot_warning(bot):
@@ -23,6 +25,15 @@ async def ensure_honeypot_warning(bot):
         log.warning("Honeypot channel not found")
         return
 
+    kick_count = await get_kick_count()
+
+    embed = HONEYPOT_WARNING_EMBED.copy()
+    embed.add_field(
+        name="Total kicks",
+        value=f"**{kick_count:,}**",
+        inline=False,
+    )
+
     async for msg in channel.history(limit=50):
         for emb in msg.embeds:
             if (
@@ -30,17 +41,22 @@ async def ensure_honeypot_warning(bot):
                 and HONEYPOT_WARNING_MARKER
                 in (emb.footer.text or "")
             ):
-                log.info("Honeypot warning already posted")
+                try:
+                    await msg.edit(embed=embed)
+                    log.info("Honeypot warning updated")
+                except discord.HTTPException as e:
+                    log.error(f"Failed to update warning: {e}")
                 return
 
     try:
-        await channel.send(embed=HONEYPOT_WARNING_EMBED)
+        await channel.send(embed=embed)
         log.info("Honeypot warning posted")
-    except Exception as e:
-        log.error(f"Failed to send honeypot warning: {e}")
+    except discord.HTTPException as e:
+        log.error(f"Failed to send warning: {e}")
 
 
 def register_events(bot):
+
     @bot.event
     async def on_ready():
         log.info(f"Bot online as {bot.user}")
@@ -56,6 +72,9 @@ def register_events(bot):
         if message.channel.id != HONEYPOT_CHANNEL:
             return
 
+        if message.guild is None:
+            return
+
         log.info(
             f"HONEYPOT TRIGGER: {message.author} "
             f"in #{message.channel.name}"
@@ -69,7 +88,7 @@ def register_events(bot):
                 embed = discord.Embed(
                     title="Honeypot Alert",
                     description=f"User: {message.author.mention}",
-                    color=discord.Color.green(),
+                    color=discord.Color.red(),
                     timestamp=message.created_at,
                 )
 
@@ -85,17 +104,13 @@ def register_events(bot):
 
                 await mod_channel.send(embed=embed)
 
-            except Exception as e:
-                log.error(
-                    f"Failed to send log embed: {e}"
-                )
+            except discord.HTTPException as e:
+                log.error(f"Failed to send log embed: {e}")
 
         try:
             await message.delete()
-        except Exception as e:
-            log.warning(
-                f"Failed to delete honeypot message: {e}"
-            )
+        except discord.HTTPException as e:
+            log.warning(f"Failed to delete honeypot message: {e}")
 
         try:
             deleted = await delete_recent_user_messages(
@@ -112,46 +127,58 @@ def register_events(bot):
                 )
 
         except Exception as e:
-            log.error(
-                f"Failed to purge messages: {e}"
-            )
+            log.error(f"Failed to purge messages: {e}")
 
         try:
-            member = await guild.fetch_member(
-                message.author.id
-            )
+            member = await guild.fetch_member(message.author.id)
 
+        except discord.NotFound:
+            log.warning(
+                f"Could not find member {message.author} "
+                "for moderation action"
+            )
+            return
+
+        except discord.HTTPException as e:
+            log.error(f"Failed to fetch member: {e}")
+            return
+
+        try:
             if BOT_ACTION == "ban":
                 await guild.ban(
                     member,
                     reason="Triggered honeypot",
                 )
 
-            else:
-                action_method = getattr(
-                    member,
-                    BOT_ACTION,
-                    None,
+                log.info(f"Banned {member}")
+
+            elif BOT_ACTION == "kick":
+                await member.kick(
+                    reason="Triggered honeypot",
                 )
 
-                if action_method:
-                    await action_method(
-                        reason="Triggered honeypot"
-                    )
-                else:
-                    log.info(
-                        f"BOT_ACTION={BOT_ACTION} "
-                        "??? no action taken"
-                    )
+                log.info(f"Kicked {member}")
 
-            log.info(
-                f"{BOT_ACTION.capitalize()} {member}"
-            )
+                await increment_kick_count()
 
-        except Exception as e:
+                await ensure_honeypot_warning(bot)
+
+            else:
+                log.warning(
+                    f"Unsupported BOT_ACTION: {BOT_ACTION}"
+                )
+
+        except discord.Forbidden:
             log.error(
-                f"Failed to apply moderation action: {e}"
+                f"Missing permissions to {BOT_ACTION} {member}"
             )
+
+        except discord.HTTPException as e:
+            log.error(
+                f"Discord API error while executing "
+                f"{BOT_ACTION} on {member}: {e}"
+            )
+
 
 def setup(bot: commands.Bot):
     register_events(bot)
